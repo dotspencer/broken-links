@@ -1,7 +1,10 @@
 package program;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -12,18 +15,37 @@ public class Crawler {
 	
 	private String base;
 	
-	public Crawler(){
+	public Crawler(String url){
 		
-		String url = "https://egi.utah.edu"; // Move this to parameter
 		base = url.trim();
 		if(base.endsWith("/")){
 			base = base.substring(0, base.length() - 2);
 		}
 		
+		checkLinksOnPage(base);
+	}
+	
+	private void checkLinksOnPage(String url){
 		ArrayList<String> links = getLinksFromPage(base);
+		HashMap<String, Boolean> result = new HashMap<>();
+		
 		for(String link : links){
-			System.out.println(link);
+			boolean live =  pageIsLive(base + link);
+			System.out.println(live + "\t" + link);
+			result.put(link,  live);
 		}
+	}
+	
+	private boolean pageIsLive(String url){
+		try {
+			URL u = new URL(url);
+			u.openConnection().connect();
+		} catch (MalformedURLException e) {
+			return false;
+		} catch (IOException e) {
+			return false;
+		}
+		return true;
 	}
 	
 	
@@ -66,6 +88,7 @@ public class Crawler {
 		boolean invalid = false;
 		invalid = invalid || externalLink;
 		invalid = invalid || url.equals("#");
+		invalid = invalid || url.equals("/");
 		invalid = invalid || url.contains("mailto:");
 		invalid = invalid || url.isEmpty();
 		

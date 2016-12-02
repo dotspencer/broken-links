@@ -16,7 +16,7 @@ public class View {
 		
 		//frame.setVisible(true);
 		
-		new Crawler();
+		new Crawler("https://egi.utah.edu");
 	}
 
 }

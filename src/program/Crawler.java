@@ -1,7 +1,10 @@
 package program;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,39 +16,65 @@ import org.jsoup.select.Elements;
 
 public class Crawler {
 	
-	private String base;
+	private String domain;
+	private String startPage;
 	
 	public Crawler(String url){
 		
-		base = url.trim();
-		if(base.endsWith("/")){
-			base = base.substring(0, base.length() - 2);
+		URI uri;
+		try {
+			uri = new URI(url);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return;
 		}
 		
-		checkLinksOnPage(base);
+		domain = uri.getScheme() + "://" + uri.getHost();
+		startPage = domain + uri.getPath();
+		
+		//System.out.println(pageIsLive("https://familysearch.org/volunteer"));
+		checkLinksOnPage(startPage);
 	}
 	
 	private void checkLinksOnPage(String url){
-		ArrayList<String> links = getLinksFromPage(base);
-		HashMap<String, Boolean> result = new HashMap<>();
+		
+		if(!pageIsLive(url).equals("200")){
+			System.out.println("Base url not live");
+			return;
+		}
+		
+		ArrayList<String> links = getLinksFromPage(url);
+		HashMap<String, String> result = new HashMap<>();
 		
 		for(String link : links){
-			boolean live =  pageIsLive(base + link);
-			System.out.println(live + "\t" + link);
+			String live =  pageIsLive(domain + link);
+			if(live.equals("200")){
+				System.out.println(live + "\t" + link);
+			} else {
+				System.err.println(live + "\t" + link);
+			}
+			
 			result.put(link,  live);
 		}
 	}
 	
-	private boolean pageIsLive(String url){
+	private String pageIsLive(String url){
+		
+		int code;
+		
 		try {
 			URL u = new URL(url);
-			u.openConnection().connect();
+			HttpURLConnection connection = (HttpURLConnection)u.openConnection();
+			connection.setRequestMethod("GET");
+			connection.connect();
+			code = connection.getResponseCode();
+			
 		} catch (MalformedURLException e) {
-			return false;
+			return "mal";
 		} catch (IOException e) {
-			return false;
+			return "io";
 		}
-		return true;
+		return code + "";
 	}
 	
 	
@@ -82,7 +111,7 @@ public class Crawler {
 		url = url.trim();
 		
 		// Must be an external link
-		boolean externalLink = !url.contains(base) && !url.startsWith("/");
+		boolean externalLink = !url.contains(domain) && !url.startsWith("/");
 		url = makeRelative(url);
 		
 		boolean invalid = false;
@@ -102,6 +131,6 @@ public class Crawler {
 		if(url.startsWith("/")){
 			return url;
 		}
-		return url.replace(base, "");
+		return url.replace(domain, "");
 	}
 }

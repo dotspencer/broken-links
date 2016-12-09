@@ -21,10 +21,12 @@ public class Crawler {
 		//System.out.println(checkConnection("http://egi.utah.edu"));
 		
 		try {
-			String pageHTML = getHTML("https://egi.utah.edu/corporate-associate-program/corporate-associate-list/");
+			String pageURL = "https://egi.utah.edu/corporate-associate-program/corporate-associate-list/";
+			String pageHTML = getHTML(pageURL);
 			String[] links = getLinks(pageHTML);
 			
 			links = filterLinks(links);
+			links = makeAbsolute(links, pageURL);
 			
 			for(String link : links){
 				System.out.println(checkConnection(link) + " : " + link);
@@ -37,6 +39,31 @@ public class Crawler {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	public static String[] makeAbsolute(String[] links, String pageURL){
+		ArrayList<String> list = new ArrayList<>();
+		for(String link : links){
+			if(link.startsWith("/")){
+				String absolute = getDomain(pageURL) + link;
+				list.add(absolute);
+				continue;
+			}
+			list.add(link);
+		}
+		return list.toArray(new String[list.size()]);
+	}
+	
+	public static String getDomain(String link){
+		
+		Pattern pattern = Pattern.compile("(https*:\\/\\/(\\w+(\\.\\w+)+))");
+		Matcher m = pattern.matcher(link);
+		
+		while(m.find()){
+			return m.group(1);
+		}
+		
+		return link;
 	}
 	
 	public static String[] filterLinks(String[] links){
@@ -52,35 +79,62 @@ public class Crawler {
 		return list.toArray(new String[list.size()]);
 	}
 	
+	/**
+	 * Driver method for checking the connection at the web address
+	 * @param address
+	 * @return The status code
+	 */
 	public static int checkConnection(String address){
+		return checkConnection(address, 0);
+	}
+	
+	/**
+	 * Helper method (recursive with followRedirect) for checking the connection at the web address
+	 * @param address
+	 * @return The status code
+	 */
+	public static int checkConnection(String address, int depth){
 		
 		URL url;
-		int response = -1;
+		int response = 0;
+		depth++;
+		
+		if(depth > 3){
+			System.err.println("Too many redirects");
+			return -1;
+		}
 		
 		try {
 			url = new URL(address);
 			
 			if(address.matches("^http:.*")){
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-				response = followRedirect(connection);
+				response = followRedirect(connection, depth);
 			}
 			
 			if(address.matches("^https:.*")){
 				HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-				response = connection.getResponseCode();
+				response = followRedirect(connection, depth);
 			}
 		}
 		catch (IOException e) {
 			System.err.println(e.getMessage());
+			return -1;
 		}
 		
 		return response;
 	}
 	
-	public static int followRedirect(HttpURLConnection connection) throws IOException{
+	/**
+	 * 
+	 * @param connection
+	 * @return The status code
+	 * @throws IOException
+	 */
+	public static int followRedirect(HttpURLConnection connection, int depth) throws IOException{
 		int response = connection.getResponseCode();
 		if(response == 301){
-			return checkConnection(connection.getHeaderField("Location"));
+			return checkConnection(connection.getHeaderField("Location"), depth);
 		}
 		
 		return response;

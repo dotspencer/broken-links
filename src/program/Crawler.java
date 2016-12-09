@@ -21,7 +21,7 @@ public class Crawler {
 		//System.out.println(checkConnection("http://egi.utah.edu"));
 		
 		try {
-			String pageURL = "https://egi.utah.edu/corporate-associate-program/corporate-associate-list/";
+			String pageURL = "https://www.lds.org/?lang=eng";
 			String pageHTML = getHTML(pageURL);
 			String[] links = getLinks(pageHTML);
 			
@@ -42,6 +42,14 @@ public class Crawler {
 	}
 	
 	public static String[] makeAbsolute(String[] links, String pageURL){
+		
+		// Reference: http://stackoverflow.com/a/4071178/3498950
+		//
+		// TODO links starting with //
+		// TODO links starting with ./
+		// TODO links starting with <nothing>
+		
+		
 		ArrayList<String> list = new ArrayList<>();
 		for(String link : links){
 			if(link.startsWith("/")){
@@ -71,7 +79,7 @@ public class Crawler {
 		for(String link : links){
 			boolean invalid = false;
 			invalid = invalid || link.matches("^mailto.*");
-			invalid = invalid || link.equals("#");
+			invalid = invalid || link.startsWith("#");
 			if(!invalid){
 				list.add(link);
 			}

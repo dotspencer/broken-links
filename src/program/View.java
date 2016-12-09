@@ -16,7 +16,7 @@ public class View {
 		
 		//frame.setVisible(true);
 		
-		new Crawler("https://en.wikipedia.org/wiki/Main_Page");
+		//new Crawler("https://en.wikipedia.org/wiki/Main_Page");
 	}
 
 }

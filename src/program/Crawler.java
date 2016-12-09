@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +16,11 @@ public class Crawler {
 	public static void main(String[] args){
 		try {
 			String pageHTML = getHTML("https://egi.utah.edu/");
+			String[] links = getLinks(pageHTML);
+			
+			for(String link : links){
+				System.out.println(link);
+			}
 			
 			
 		} catch (IOException e) {
@@ -23,7 +28,6 @@ public class Crawler {
 		}
 		
 	}
-	
 	
 	
 	public static String getHTML(String url) throws IOException{
@@ -48,15 +52,15 @@ public class Crawler {
 	
 	public static String[] getLinks(String html){
 		
-		ArrayList<String> list = new ArrayList<>();
+		HashSet<String> set = new HashSet<>();
 		
-		Pattern pattern = Pattern.compile("/<\\s*a.*?href=\"(.*?)\".*?>/");
+		Pattern pattern = Pattern.compile("<\\s*a.*?href=\"(.*?)\".*?>");
 		Matcher m = pattern.matcher(html);
 		while(m.find()){
-			list.add(m.group(1));
+			set.add(m.group(1));
 		}
 		
-		return (String[]) list.toArray();
+		return set.toArray(new String[set.size()]);
 	}
 	
 }

@@ -21,7 +21,7 @@ public class Crawler {
 		//System.out.println(checkConnection("http://egi.utah.edu"));
 		
 		try {
-			String pageURL = "https://www.lds.org/?lang=eng";
+			String pageURL = "https://egi.utah.edu/research/current-projects/";
 			String pageHTML = getHTML(pageURL);
 			String[] links = getLinks(pageHTML);
 			
@@ -45,13 +45,17 @@ public class Crawler {
 		
 		// Reference: http://stackoverflow.com/a/4071178/3498950
 		//
-		// TODO links starting with //
 		// TODO links starting with ./
 		// TODO links starting with <nothing>
 		
 		
 		ArrayList<String> list = new ArrayList<>();
 		for(String link : links){
+			if(link.startsWith("//")){
+				String absolute = getProtocol(pageURL) + link;
+				list.add(absolute);
+				continue;
+			}
 			if(link.startsWith("/")){
 				String absolute = getDomain(pageURL) + link;
 				list.add(absolute);
@@ -60,6 +64,17 @@ public class Crawler {
 			list.add(link);
 		}
 		return list.toArray(new String[list.size()]);
+	}
+	
+	public static String getProtocol(String link){
+		Pattern pattern = Pattern.compile("(https?:)");
+		Matcher m = pattern.matcher(link);
+		
+		while(m.find()){
+			return m.group(1);
+		}
+		
+		return link;
 	}
 	
 	public static String getDomain(String link){
@@ -171,6 +186,15 @@ public class Crawler {
 	
 	public static String[] getLinks(String html){
 		
+		// Stripping away <script> tags because they sometimes have anchor string literals
+		Pattern pattern1 = Pattern.compile("<script>.*?<\\/script>", Pattern.DOTALL);
+		Matcher m1 = pattern1.matcher(html);
+		
+		while(m1.find()){
+			html = html.replace(m1.group(), "");
+		}
+		
+		// Gathering all links
 		HashSet<String> set = new HashSet<>();
 		
 		Pattern pattern = Pattern.compile("<\\s*a.*?href=\"(.*?)\".*?>");

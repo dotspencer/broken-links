@@ -21,7 +21,7 @@ public class Crawler {
 		//System.out.println(checkConnection("http://egi.utah.edu"));
 		
 		try {
-			String pageURL = "https://egi.utah.edu/research/current-projects/";
+			String pageURL = "https://egi.utah.edu/corporate-associate-program/training-certifications-degrees/";
 			String pageHTML = getHTML(pageURL);
 			String[] links = getLinks(pageHTML);
 			
@@ -29,10 +29,15 @@ public class Crawler {
 			links = makeAbsolute(links, pageURL);
 			
 			for(String link : links){
-				System.out.println(checkConnection(link) + " : " + link);
+				int connection = checkConnection(link);
+				if(connection == 404){
+					System.out.println("\n" + connection + " " + link);
+				} else {
+					System.out.print("|");
+				}
 			}
 			
-			System.out.println("-- End of Links --");
+			System.out.println("\n-- End of Links --");
 			
 			
 		} catch (IOException e) {
@@ -46,6 +51,7 @@ public class Crawler {
 		// Reference: http://stackoverflow.com/a/4071178/3498950
 		//
 		// TODO links starting with ./
+		// TODO links starting with ?
 		// TODO links starting with <nothing>
 		
 		
@@ -156,13 +162,12 @@ public class Crawler {
 	 */
 	public static int followRedirect(HttpURLConnection connection, int depth) throws IOException{
 		int response = connection.getResponseCode();
-		if(response == 301){
+		if(response == 301 || response == 302){
 			return checkConnection(connection.getHeaderField("Location"), depth);
 		}
 		
 		return response;
 	}
-	
 	
 	public static String getHTML(String url) throws IOException{
 	
@@ -207,7 +212,13 @@ public class Crawler {
 	}
 	
 	public class ConnectionState{
-		public String state;
+		public String url;
+		public int status;
+		
+		public ConnectionState(String url, int status){
+			this.url = url;
+			this.status = status;
+		}
 	}
 }
 

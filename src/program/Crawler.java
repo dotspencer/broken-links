@@ -26,7 +26,7 @@ public class Crawler {
 			String[] links = getLinks(pageHTML);
 			
 			links = filterLinks(links);
-			links = makeAbsolute(links, pageURL);
+			links = makeAllAbsolute(links, pageURL);
 			
 			for(String link : links){
 				int connection = checkConnection(link);
@@ -46,27 +46,41 @@ public class Crawler {
 		
 	}
 	
-	public static String[] makeAbsolute(String[] links, String pageURL){
-		
+	public static String makeAbsolute(String link, String pageURL){
 		// Reference: http://stackoverflow.com/a/4071178/3498950
 		//
 		// TODO links starting with ./
 		// TODO links starting with ?
 		// TODO links starting with <nothing>
 		
+		boolean baseEndsWithSlash = pageURL.endsWith("/");
+		boolean linkStartsWithSlash = pageURL.startsWith("/");
 		
+		if(link.startsWith("//")){
+			return getProtocol(pageURL) + link;
+		}
+		
+		//Starts with letter 
+		if(link.matches("^\\w.*")){
+			String slash = baseEndsWithSlash ? "" : "/";
+			return pageURL + slash + link;
+		}
+		
+		// Starts with single slash
+		if(link.startsWith("/")){
+			return getDomain(pageURL) + link;
+		}
+		
+		if(link.startsWith("./")){
+			return pageURL + link;
+		}
+		return link;
+	}
+	
+	public static String[] makeAllAbsolute(String[] links, String pageURL){
 		ArrayList<String> list = new ArrayList<>();
 		for(String link : links){
-			if(link.startsWith("//")){
-				String absolute = getProtocol(pageURL) + link;
-				list.add(absolute);
-				continue;
-			}
-			if(link.startsWith("/")){
-				String absolute = getDomain(pageURL) + link;
-				list.add(absolute);
-				continue;
-			}
+			makeAbsolute(link, pageURL);
 			list.add(link);
 		}
 		return list.toArray(new String[list.size()]);

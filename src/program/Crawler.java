@@ -54,7 +54,7 @@ public class Crawler {
 		// TODO links starting with <nothing>
 		
 		boolean baseEndsWithSlash = pageURL.endsWith("/");
-		boolean linkStartsWithSlash = pageURL.startsWith("/");
+		//boolean linkStartsWithSlash = pageURL.startsWith("/");
 		
 		if(link.startsWith("//")){
 			return getProtocol(pageURL) + link;
